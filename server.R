@@ -195,6 +195,22 @@ shinyServer(function(input, output) {
     
     return(partial)
   })
+  
+  matrix_subsetter_chemical <- reactive({
+    # get all chemical information
+    id_info <- chemical_loader()
+    if (is.null(id_info)) return(NULL)
+    chem_id_df <- get_lookup_list(id_info[['id']], master)
+    # the basic identifies , GSID + Cluster
+    ip <- subset(chem_id_df, GSID != '' & CAS != '', select=c(GSID, Cluster))
+    
+    full <- activity_filter()
+    
+    # subset the matrices by chemicals
+    partial <- get_input_chemical_mat(ip, full)
+    return(partial)
+    
+  })
 
 # matrix_editor()
   matrix_editor <- reactive({
@@ -203,7 +219,8 @@ shinyServer(function(input, output) {
     rm_nohit_assay <- input$rm_nohit_assay
     act_mat_names <- c('modl_acc', 'modl_acb', 'modl_ga', 'modl_ac10')
     
-    partial <- activity_filter()
+#    partial <- activity_filter()
+    partial <- matrix_subsetter_chemical()
     # if it is data matrix input, skip 
     if (length(partial) == 2) return(partial)
     

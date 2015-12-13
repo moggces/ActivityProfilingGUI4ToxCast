@@ -35,7 +35,7 @@ rename_mat_col_row <- function (partial, master, assay_names, input_chemical_nam
   if (is.null(chemical_name_ref)) {
     chemical_name_ref <- conversion(master, inp='GSID', out='Chemical.Name')
   } 
-  
+
   for (name in names(partial))
   {
     #print(name)
@@ -49,6 +49,7 @@ rename_mat_col_row <- function (partial, master, assay_names, input_chemical_nam
       colnames(partial[[name]]) <-  pathway_ref[as.character(colnames(partial[[name]])) ]
     }
   }
+  
   return(partial)
 }
 
