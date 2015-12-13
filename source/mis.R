@@ -49,7 +49,7 @@ rename_mat_col_row <- function (partial, master, assay_names, input_chemical_nam
       colnames(partial[[name]]) <-  pathway_ref[as.character(colnames(partial[[name]])) ]
     }
   }
-  
+
   return(partial)
 }
 

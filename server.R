@@ -208,6 +208,13 @@ shinyServer(function(input, output) {
     
     # subset the matrices by chemicals
     partial <- get_input_chemical_mat(ip, full)
+    
+    # rename the assays & chemicals
+    partial <- rename_mat_col_row(partial,  master, assay_names, input_chemical_name=NULL, rename_assay=FALSE)
+    
+    # sort the matrix
+    partial <- sort_matrix(partial)
+    
     return(partial)
     
   })
@@ -255,16 +262,11 @@ shinyServer(function(input, output) {
       input_chemical_name <- conversion(chem_id_df, inp='GSID', out='input_Chemical.Name')
     }
     
-    
-    
     # the basic identifies , GSID + Cluster
     ip <- subset(chem_id_df, GSID != '' & CAS != '', select=c(GSID, Cluster))
-    
+  
     # the cleaned matrices
     dt <- matrix_editor()
-    
-    # get the partial and change name after changing name sort matrix
-    dt <- get_input_chemical_mat(ip, dt)
     
     # if the input is data matrix, creat a blank CV matrix
     if (length(dt) == 2 ) 
@@ -363,22 +365,22 @@ shinyServer(function(input, output) {
 
   output$dd <- renderDataTable({
     
-    return(as.data.frame(matrix_editor()[['modl_acc']]))
+#    return(as.data.frame(matrix_editor()[['modl_acc']]))
     
-#     paras <- heatmap_para_generator() #heatmap_para_generator
-#     act <- paras[['act']]
-#     annotation <- paras[['annotation']]
-#     
-#     id_info <- chemical_loader()
-#     id_data <- master
-#     isUpload <- FALSE
-#     if(length(id_info) > 1) {
-#       id_data <- id_info[['id']]
-#       isUpload <- TRUE
-#     }
-#     result <- get_output_df(act, annotation, id_data, isUpload)
-#     
-#     return(result)
+    paras <- heatmap_para_generator() #heatmap_para_generator
+    act <- paras[['act']]
+    annotation <- paras[['annotation']]
+    
+    id_info <- chemical_loader()
+    id_data <- master
+    isUpload <- FALSE
+    if(length(id_info) > 1) {
+      id_data <- id_info[['id']]
+      isUpload <- TRUE
+    }
+    result <- get_output_df(act, annotation, id_data, isUpload)
+    
+    return(result)
     
     # for testing
 #       paras <- heatmap_para_generator()
