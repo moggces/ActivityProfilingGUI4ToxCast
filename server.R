@@ -107,12 +107,12 @@ shinyServer(function(input, output) {
     
     # get all chemical information
     id_info <- chemical_loader()
-    
-    chem_id_df <- get_lookup_list(id_info[['id']], master)
+    if (is.null(id_info)) return(NULL)
+    #chem_id_df <- get_lookup_list(id_info[['id']], master)
     #ip <- subset(chem_id_df, ! is.na(StructureID), select=c(CAS, Cluster))
     
     # the basic identifies , GSID + Cluster
-    ip <- subset(chem_id_df, GSID != '' & CAS != '', select=c(GSID, Cluster))
+    #ip <- subset(chem_id_df, GSID != '' & CAS != '', select=c(GSID, Cluster))
     
     # collect all the matrices and store in full (list)
     
@@ -120,7 +120,7 @@ shinyServer(function(input, output) {
     full <- activities 
     
     # if it is a data matrix input, only CAS ID is allowd
-    input_chemical_name <- NULL
+#    input_chemical_name <- NULL
     if (length(id_info) > 1) # for loading the data matrix function
     {
       full <- id_info[! grepl('id', names(id_info))]
@@ -130,20 +130,21 @@ shinyServer(function(input, output) {
       full[[1]] <- full[[1]][! is.na(avail_name), ]
       rownames(full[[1]]) <- avail_name[!is.na(avail_name)]
       
-      if (! is.null(id_info[['id']]$input_Chemical.Name)) {
-        input_chemical_name <- conversion(join(id_info[['id']], master), inp='GSID', out='input_Chemical.Name')
-      }
-      rename_assay <- FALSE
+#      if (! is.null(id_info[['id']]$input_Chemical.Name)) {
+#        input_chemical_name <- conversion(join(id_info[['id']], master), inp='GSID', out='input_Chemical.Name')
+#      }
+#      rename_assay <- FALSE
     }
     
     # the structure fingerprint matrix
     full[['struct']] <- struct_mat
     
     # subset the matrices by chemicals
-    partial <- get_input_chemical_mat(ip, full)
+    #partial <- get_input_chemical_mat(ip, full)
+    partial <- full
     
     # rename the assays & chemicals
-    partial <- rename_mat_col_row(partial,  master, assay_names, input_chemical_name, rename_assay=FALSE)
+#    partial <- rename_mat_col_row(partial,  master, assay_names, input_chemical_name, rename_assay=FALSE)
     
     # subset the matrices by assay names
     partial <- get_assay_mat(partial, sel=reg_source, inv=FALSE, type='source')
@@ -151,7 +152,7 @@ shinyServer(function(input, output) {
     partial <- get_assay_mat(partial, sel=reg_gene, inv=inv_sel_gene, type='gene' )
     
     # sort the matrix
-    partial <- sort_matrix(partial)
+#    partial <- sort_matrix(partial)
     
     return(partial)
   })
@@ -160,6 +161,12 @@ shinyServer(function(input, output) {
   activity_filter <- reactive({
     
     # load all the activity filter parameters
+    
+    partial <- matrix_subsetter()
+    if (is.null(partial)) return(NULL)
+    
+    # if it is data matrix input, don't change 
+    if (length(partial) == 2) return(partial)
     
     sresp_thres <- input$sresp_thres
     acc_thres <- ifelse(is.na(input$acc_thres), 0, log10(input$acc_thres/1000000)*-1)
@@ -170,22 +177,17 @@ shinyServer(function(input, output) {
     hitfilter <- TRUE
     cytofilter <- input$cytofilter
     flagfilter <- input$flagfilter
-    
-    partial <- matrix_subsetter()
-    
-    # if it is data matrix input, don't change 
-    if (length(partial) == 2) return(partial)
-   
+
     act_mat_names <- c('modl_acc', 'modl_acb', 'modl_ga', 'modl_ac10')
     # reverse direction of mitotox could be meaningful
     #partial <- fix_mitotox_reverse(partial,act_mat_names=act_mat_names )
     
     # filtering
-    partial <- filter_activity_by_type(partial, 'scaled_emax', sresp_thres, act_mat_names=act_mat_names)
-    partial <- filter_activity_by_type(partial, 'modl_acc', acc_thres,act_mat_names=act_mat_names)
-    partial <- filter_activity_by_type(partial, 'modl_acb', acb_thres,act_mat_names=act_mat_names)
-    partial <- filter_activity_by_type(partial, 'modl_ga', ga_thres,act_mat_names=act_mat_names)
-    partial <- filter_activity_by_type(partial, 'modl_ac10', ac10_thres,act_mat_names=act_mat_names)
+    if (sresp_thres > 1) partial <- filter_activity_by_type(partial, 'scaled_emax', sresp_thres, act_mat_names=act_mat_names)
+    if (acc_thres > 0) partial <- filter_activity_by_type(partial, 'modl_acc', acc_thres,act_mat_names=act_mat_names)
+    if (acb_thres > 0) partial <- filter_activity_by_type(partial, 'modl_acb', acb_thres,act_mat_names=act_mat_names)
+    if (ga_thres > 0) partial <- filter_activity_by_type(partial, 'modl_ga', ga_thres,act_mat_names=act_mat_names)
+    if (ac10_thres > 0) partial <- filter_activity_by_type(partial, 'modl_ac10', ac10_thres,act_mat_names=act_mat_names)
     partial <- filter_activity_by_type(partial, 'hitc', thres=NULL, decision=hitfilter,act_mat_names=act_mat_names)
     partial <- filter_activity_by_type(partial, 'cyto_lower_bnd', thres=NULL, decision=cytofilter,act_mat_names=act_mat_names)
     # it has to be the end
@@ -235,11 +237,17 @@ shinyServer(function(input, output) {
     if (! is.null(chem_id_df$input_Chemical.Name)) {
       input_chemical_name <- conversion(chem_id_df, inp='GSID', out='input_Chemical.Name')
     }
+    
+    
+    
     # the basic identifies , GSID + Cluster
     ip <- subset(chem_id_df, GSID != '' & CAS != '', select=c(GSID, Cluster))
     
     # the cleaned matrices
-    dt <- matrix_editor() 
+    dt <- matrix_editor()
+    
+    # get the partial and change name after changing name sort matrix
+    dt <- get_input_chemical_mat(ip, dt)
     
     # if the input is data matrix, creat a blank CV matrix
     if (length(dt) == 2 ) 
@@ -338,22 +346,22 @@ shinyServer(function(input, output) {
 
   output$dd <- renderDataTable({
     
-#    return(matrix_subsetter()[['modl_acc']])
+    return(as.data.frame(matrix_editor()[['modl_acc']]))
     
-    paras <- heatmap_para_generator() #heatmap_para_generator
-    act <- paras[['act']]
-    annotation <- paras[['annotation']]
-    
-    id_info <- chemical_loader()
-    id_data <- master
-    isUpload <- FALSE
-    if(length(id_info) > 1) {
-      id_data <- id_info[['id']]
-      isUpload <- TRUE
-    }
-    result <- get_output_df(act, annotation, id_data, isUpload)
-    
-    return(result)
+#     paras <- heatmap_para_generator() #heatmap_para_generator
+#     act <- paras[['act']]
+#     annotation <- paras[['annotation']]
+#     
+#     id_info <- chemical_loader()
+#     id_data <- master
+#     isUpload <- FALSE
+#     if(length(id_info) > 1) {
+#       id_data <- id_info[['id']]
+#       isUpload <- TRUE
+#     }
+#     result <- get_output_df(act, annotation, id_data, isUpload)
+#     
+#     return(result)
     
     # for testing
 #       paras <- heatmap_para_generator()
