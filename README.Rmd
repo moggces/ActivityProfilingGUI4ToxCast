@@ -1,0 +1,155 @@
+---
+output: html_document
+---
+## A R Shiny interface to explore ToxCast activity profiling data
+The data were downloaded from [EPA TOXCast data](http://www2.epa.gov/chemical-research/toxicity-forecaster-toxcasttm-data)(v. 102015). The data from **INVITRODB_V2_SUMMARY** were the background data. 
+
+### Requirement
+
+* firefox or chrome browser with the link on NIEHS internal JOBS server [JOBS](http://jobs.niehs.nih.gov:3838/myapps/toxcastactprofiler/) or Rstudio public Shiny server [shinyapps.io](https://hsiehjh.shinyapps.io/toxcastactprofiler)
+
+***
+
+### Input
+One type of input is allowed: chemicals
+
+##### chemicals
+1. creat two columns of data (i.e., chemical ID and its attribute) in excel
+  + chemical ID: one type is allowed, **CAS**
+      + CAS: Chemical Abstracts Service registration ID, e.g., 83-79-4
+  + attribute: any class attribute associated with the chemical that could be compared with the in vitro qHTS data
+2. create column names (case sensitive): **CAS** and **Cluster**
+3. copy and paste to the text area
+
+or the **Cluster** column is optional
+
+###### Examples
+CAS | Cluster
+----| -------
+83-79-4 | positive_zfish
+80-05-7 | negative_zfish
+
+***
+
+### Profiling
+
+##### activity
+results interpretation, e.g., whether the compound is active
+
+    * activity type
+        + ACC: the activity concentration at cutoff 
+        + ACB: the activity concentration at baseline 
+        + AC50: the activity concentration at 50% of the modeled top value
+        + AC10: the activity concentration at 10% of the modeled top value
+    
+###### activity type
+
+type | value range | value description
+-----|-------------| -----------------
+ACC | log10(M)\*(-1) | higher value -> more potent <br> 1E-4 -> inconlusive <br> 0 -> inactive
+
+ACB, AC50, AC10 type is same as pod type. 
+
+***
+
+### Activity filtering
+The default activity results are filtered using the **hitc** matrix. But the activities can be **further** filtered by following parameters
+
+* scaled resp threshold: the ratio of the modeled top value to the cutoff value in each assay (similar to efficacy)
+* ACC, ACB, AC50, AC10 threshold: see above
+* apply cytotoxicity filter: ON to label hits which may be confounded by cytotoxicity as inconclusive (NB: **lower_bnd_um** column in **cyto_dist_Matrix** were used. Also, actives from the **burst_assay** (i.e. the assays used in generating cytotoxicity threshold) are exempt)
+* apply flag (from curve fitting) filter: ON to label hits which mayhave fitting issues (NB: **AllResults_flags** and **spid_Matrix** were used). When OFF, hits with flags will have  **#** in the cells
+* make inconclusive (compounds with cytotoxic or flag label) as inactive: ON to make the cell value for inconclusive (0.0001) as inactive (0). 
+
+
+***
+
+### Compound sorting
+The columns of the heatmap can be ordered in three methods:
+
+1. structure similarity
+    + Tanimoto cofficient based on Leadscope structural fingerprints
+    + hierarchical clustering with average linkage
+    + chemicals are grouped by cutoff 0.7
+    + a new parameter is created, chemClust, where chemClust = 0, are the compounds that cannot form clusters or compounds without structures
+    
+2. activity similarity
+    + Euclidean distance based on respective activities
+    + hierarchical clustering with average linkage
+    
+3. toxicity score (only for __activity__)
+    + sum of the activities (unbounded, dependent on # of assasy used)
+
+***
+
+### Assay filtering
+
+Please see the __Assays__ tab to get assay information
+
+* remove no-hit (non-tested included) assays: ON to remove assays that have no hits (OFF is suggested when using the gene or assay name filtering, see below)
+
+1. by assay source
+2. by assay name (NB: **assay_component_endpoint_name** is used)
+3. by gene name (NB: **intended_target_gene_name** is used)
+
+Simple regular expression rules:
+
+1. select BSK data source
+2. use __|__ as OR combination. For example, **_3C|_4H** in BSK assay source
+3. ON to invert your selection
+
+***
+
+
+### Others
+
+1. show the clustered dendrogram instead of the heatmap (toggle ON show compound similarity dendrogram)
+2. limit the heatmap/potency plot in one page (toggle ON keep heatmap size one page)
+3. adjust font size when downloading heatmap or online
+
+  * Download Activities: If the data have not been released to PubChem, they will not be able to download
+  * Save Plot (currently only for heatmap)
+
+***
+
+### Tabs
+
+#### Input chemicals
+
+If the input chemicals are not available, they will not have _GSID_. 
+Current information is based on EPA DSSTOX. 
+
+#### Profile
+
+The heatmap will be displayed here. 
+
+##### main map
+
+* columns are compounds
+* rows are assays
+* cells are activities
+* coloring scheme: please refer the color bar
+* gray color: not tested. However if \"exclude inconclusive label\" ON, it could also mean _inconclusive_.
+
+##### annotation map
+
+* columns are compounds
+* first row is toxScore (only available in __activity__)
+* second row is userClust (__Cluster__)
+* third row is chemCust
+
+#### Activity data 
+
+background data used for heatmap and potency plot
+
+#### Assays
+
+assay information
+
+
+***
+
+### References
+
+contact [Jui-Hua Hsieh](mailto:juihua.hsieh@gmail.com) for more information 
+
