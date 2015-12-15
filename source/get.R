@@ -231,4 +231,28 @@ get_published_data_only_commonname <- function (dd, assay_dd)
   return(result)
 }
 
+get_clust_assay_enrichment <- function (partial_act, full_act, annotation)
+{
+  pp <- partial_act %>% add_rownames() %>% left_join(select(add_rownames(annotation), -toxScore)) %>%
+    mutate(allClust = "all") %>% gather(assay, act, -matches('rowname|Clust'), na.rm = TRUE) %>%
+    gather(clust_group, clust, matches('Clust')) %>% 
+    group_by(assay, clust_group, clust) %>% filter(clust_group == 'userClust' & clust == 'unassigned') %>%
+    summarize(n=sum(act != 0.0001), n_p=sum(act > 0.0001), n_mean=mean(act), n_std=sd(act))
+  
+  ff <- full_act %>% select(one_of(colnames(partial_act))) %>% gather(assay, act, na.rm = TRUE) %>%
+    group_by(assay) %>% 
+    summarise(N=sum(act != 0.0001), N_P=sum(act > 0.0001), N_mean=mean(act), N_std=sd(act))
 
+  result <- pp %>% left_join(ff) %>% filter(n_p > 1) 
+  result <- result %>% rowwise() %>% 
+    mutate(logp = log10(get_fisher_pvalue(n, n_p, N_P, N)$p.value), zscore = (n_mean-N_mean)/N_std)
+  return(result)
+  
+}
+
+get_fisher_pvalue <- function (n, n_p, N_P, N)
+{
+  conti <- matrix ( c( n_p, n-n_p, N_P-n_p, N-n-(N_P-n_p)), nrow=2, dimnames = list(active = c('In', 'notIn'), clust = c('In', 'notIn')))
+  fish <- fisher.test( conti, alternative="greater" )
+  return(fish)
+}

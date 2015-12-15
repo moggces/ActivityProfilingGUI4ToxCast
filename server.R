@@ -24,7 +24,7 @@ library(RColorBrewer)
 library(ggplot2)
 library(scales)
 library(dplyr)
-#library(tidyr)
+library(tidyr)
 library(stringr)
 options(stringsAsFactors = FALSE)
 
@@ -108,11 +108,10 @@ shinyServer(function(input, output) {
     # get all chemical information
     id_info <- chemical_loader()
     if (is.null(id_info)) return(NULL)
-    #chem_id_df <- get_lookup_list(id_info[['id']], master)
-    #ip <- subset(chem_id_df, ! is.na(StructureID), select=c(CAS, Cluster))
+    chem_id_df <- get_lookup_list(id_info[['id']], master)
     
     # the basic identifies , GSID + Cluster
-    #ip <- subset(chem_id_df, GSID != '' & CAS != '', select=c(GSID, Cluster))
+    ip <- subset(chem_id_df, GSID != '' & CAS != '', select=c(GSID, Cluster))
     
     # collect all the matrices and store in full (list)
     
@@ -121,30 +120,30 @@ shinyServer(function(input, output) {
     
     # if it is a data matrix input, only CAS ID is allowd
 #    input_chemical_name <- NULL
-    if (length(id_info) > 1) # for loading the data matrix function
-    {
-      full <- id_info[! grepl('id', names(id_info))]
-      chemical_name_ref <- conversion(master, inp='CAS', out='GSID')
-      #rownames(full[[1]]) <- chemical_name_ref[as.character(rownames(full[[1]]))]
-      avail_name <- chemical_name_ref[as.character(rownames(full[[1]]))]
-      full[[1]] <- full[[1]][! is.na(avail_name), ]
-      rownames(full[[1]]) <- avail_name[!is.na(avail_name)]
+#     if (length(id_info) > 1) # for loading the data matrix function
+#     {
+#       full <- id_info[! grepl('id', names(id_info))]
+#       chemical_name_ref <- conversion(master, inp='CAS', out='GSID')
+#       #rownames(full[[1]]) <- chemical_name_ref[as.character(rownames(full[[1]]))]
+#       avail_name <- chemical_name_ref[as.character(rownames(full[[1]]))]
+#       full[[1]] <- full[[1]][! is.na(avail_name), ]
+#       rownames(full[[1]]) <- avail_name[!is.na(avail_name)]
       
 #      if (! is.null(id_info[['id']]$input_Chemical.Name)) {
 #        input_chemical_name <- conversion(join(id_info[['id']], master), inp='GSID', out='input_Chemical.Name')
 #      }
 #      rename_assay <- FALSE
-    }
+#    }
     
     # the structure fingerprint matrix
     full[['struct']] <- struct_mat
     
     # subset the matrices by chemicals
-    #partial <- get_input_chemical_mat(ip, full)
-    partial <- full
+    partial <- get_input_chemical_mat(ip, full)
+    #partial <- full
     
     # rename the assays & chemicals
-#    partial <- rename_mat_col_row(partial,  master, assay_names, input_chemical_name, rename_assay=FALSE)
+    partial <- rename_mat_col_row(partial,  master, assay_names, input_chemical_name=NULL, rename_assay=FALSE)
     
     # subset the matrices by assay names
     partial <- get_assay_mat(partial, sel=reg_source, inv=FALSE, type='source')
@@ -152,7 +151,7 @@ shinyServer(function(input, output) {
     partial <- get_assay_mat(partial, sel=reg_gene, inv=inv_sel_gene, type='gene' )
     
     # sort the matrix
-#    partial <- sort_matrix(partial)
+    partial <- sort_matrix(partial)
     
     return(partial)
   })
@@ -196,28 +195,28 @@ shinyServer(function(input, output) {
     return(partial)
   })
   
-  matrix_subsetter_chemical <- reactive({
-    # get all chemical information
-    id_info <- chemical_loader()
-    if (is.null(id_info)) return(NULL)
-    chem_id_df <- get_lookup_list(id_info[['id']], master)
-    # the basic identifies , GSID + Cluster
-    ip <- subset(chem_id_df, GSID != '' & CAS != '', select=c(GSID, Cluster))
-    
-    full <- activity_filter()
-    
-    # subset the matrices by chemicals
-    partial <- get_input_chemical_mat(ip, full)
-    
-    # rename the assays & chemicals
-    partial <- rename_mat_col_row(partial,  master, assay_names, input_chemical_name=NULL, rename_assay=FALSE)
-    
-    # sort the matrix
-    partial <- sort_matrix(partial)
-    
-    return(partial)
-    
-  })
+#   matrix_subsetter_chemical <- reactive({
+#     # get all chemical information
+#     id_info <- chemical_loader()
+#     if (is.null(id_info)) return(NULL)
+#     chem_id_df <- get_lookup_list(id_info[['id']], master)
+#     # the basic identifies , GSID + Cluster
+#     ip <- subset(chem_id_df, GSID != '' & CAS != '', select=c(GSID, Cluster))
+#     
+#     full <- activity_filter()
+#     
+#     # subset the matrices by chemicals
+#     partial <- get_input_chemical_mat(ip, full)
+#     
+#     # rename the assays & chemicals
+#     partial <- rename_mat_col_row(partial,  master, assay_names, input_chemical_name=NULL, rename_assay=FALSE)
+#     
+#     # sort the matrix
+#     partial <- sort_matrix(partial)
+#     
+#     return(partial)
+#     
+#   })
 
 # matrix_editor()
   matrix_editor <- reactive({
@@ -226,8 +225,9 @@ shinyServer(function(input, output) {
     rm_nohit_assay <- input$rm_nohit_assay
     act_mat_names <- c('modl_acc', 'modl_acb', 'modl_ga', 'modl_ac10')
     
-#    partial <- activity_filter()
-    partial <- matrix_subsetter_chemical()
+    partial <- activity_filter()
+    if (is.null(partial)) return(NULL)
+    #partial <- matrix_subsetter_chemical()
     # if it is data matrix input, skip 
     if (length(partial) == 2) return(partial)
     
@@ -255,6 +255,10 @@ shinyServer(function(input, output) {
     sort_meth <- input$sort_method
     activity_type <- ''
     
+    # the cleaned matrices
+    dt <- matrix_editor()
+    if (is.null(dt)) return(NULL)
+    
     # get all chemical information
     input_chemical_name <- NULL
     chem_id_df <- get_lookup_list(chemical_loader()[['id']], master)
@@ -264,18 +268,15 @@ shinyServer(function(input, output) {
     
     # the basic identifies , GSID + Cluster
     ip <- subset(chem_id_df, GSID != '' & CAS != '', select=c(GSID, Cluster))
-  
-    # the cleaned matrices
-    dt <- matrix_editor()
     
     # if the input is data matrix, creat a blank CV matrix
-    if (length(dt) == 2 ) 
-    {
-      activity_type <- names(dt)[1]
-      act <- dt[[1]]
-      cv <-  matrix("", nrow(act), ncol(act), dimnames=dimnames(act))
-    } else
-    {
+#     if (length(dt) == 2 ) 
+#     {
+#       activity_type <- names(dt)[1]
+#       act <- dt[[1]]
+#       cv <-  matrix("", nrow(act), ncol(act), dimnames=dimnames(act))
+#     } else
+#     {
      
       activity_type <- input$acttype
       act <- dt[[activity_type]]
@@ -284,7 +285,7 @@ shinyServer(function(input, output) {
       #cv <- dt[['cv_mark']]
       cv <- cv_mark
       
-    }
+#    }
     
     # struct matrix
     struct <- dt[['struct']]
@@ -310,6 +311,70 @@ shinyServer(function(input, output) {
     # cluster assays by similarity 
     drows <- dist(t(act) , method = "euclidean") ## assays
     return(list(dcols=dcols, drows=drows, annotation=annotation, annt_colors=annt_colors, act=act, struct=struct, cv=cv))
+    
+  })
+  
+  chemical_enricher <- reactive({
+    
+   
+    
+    paras <- heatmap_para_generator()
+    if (is.null(paras)) return(NULL)
+    
+    # parameters for matrix_subsetter()
+    reg_assay <- input$reg_assay 
+    inv_sel_assay <- input$inv_sel_assay 
+    reg_gene <- input$reg_gene 
+    inv_sel_gene <- input$inv_sel_gene
+    reg_source <- paste0(input$assay_source, collapse = "|")
+    activity_type <- input$acttype
+    act_mat_names <- activity_type
+    
+    # get the partial matrix
+    partial <- activity_filter()
+    # inactive = 0, filtered activities < 0, not tested NA
+    partial[[act_mat_names]][ partial[['hitc']] == 0 & ! is.na(partial[['hitc']]) ] <- 0
+    
+    
+    # parameters for activity_filter()
+    sresp_thres <- input$sresp_thres
+    acc_thres <- ifelse(is.na(input$acc_thres), 0, log10(input$acc_thres/1000000)*-1)
+    acb_thres <- ifelse(is.na(input$acb_thres), 0, log10(input$acb_thres/1000000)*-1)
+    ga_thres <- ifelse(is.na(input$ga_thres), 0, log10(input$ga_thres/1000000)*-1)
+    ac10_thres <- ifelse(is.na(input$ac10_thres), 0, log10(input$ac10_thres/1000000)*-1)
+    #isstrong <- input$isstrong
+    hitfilter <- TRUE
+    cytofilter <- input$cytofilter
+    flagfilter <- input$flagfilter
+    
+    full <- activities
+    # subset the matrices by assay names
+    full <- get_assay_mat(full, sel=reg_source, inv=FALSE, type='source')
+    full <- get_assay_mat(full, sel=reg_assay, inv=inv_sel_assay, type='assay' )
+    full <- get_assay_mat(full, sel=reg_gene, inv=inv_sel_gene, type='gene' )
+    
+    
+    # reverse direction of mitotox could be meaningful
+    #partial <- fix_mitotox_reverse(partial,act_mat_names=act_mat_names )
+    
+    # filtering
+    if (sresp_thres > 1) full <- filter_activity_by_type(full, 'scaled_emax', sresp_thres, act_mat_names=act_mat_names)
+    if (acc_thres > 0) full <- filter_activity_by_type(full, 'modl_acc', acc_thres,act_mat_names=act_mat_names)
+    if (acb_thres > 0) full <- filter_activity_by_type(full, 'modl_acb', acb_thres,act_mat_names=act_mat_names)
+    if (ga_thres > 0) full <- filter_activity_by_type(full, 'modl_ga', ga_thres,act_mat_names=act_mat_names)
+    if (ac10_thres > 0) full <- filter_activity_by_type(full, 'modl_ac10', ac10_thres,act_mat_names=act_mat_names)
+    full <- filter_activity_by_type(full, 'hitc', thres=NULL, decision=hitfilter,act_mat_names=act_mat_names)
+    full <- filter_activity_by_type(full, 'cyto_lower_bnd', thres=NULL, decision=cytofilter,act_mat_names=act_mat_names)
+    # it has to be the end
+    full <- filter_activity_by_type(full, 'flags', thres=NULL, decision=flagfilter,act_mat_names=act_mat_names)
+    
+    # inactive = 0, filtered activities < 0, not tested NA
+    full[[act_mat_names]][ full[['hitc']] == 0 & ! is.na(full[['hitc']]) ] <- 0
+    
+    result <- get_clust_assay_enrichment(partial[[act_mat_names]], full[[act_mat_names]], paras[['annotation']])
+    
+    
+    return(result)
     
   })
 
@@ -388,6 +453,11 @@ shinyServer(function(input, output) {
 #       return(data.frame(rownames(paras[['act']])))
        #return(data.frame(paras[['annotation']]))
     
+  })
+  
+  output$enrich <- renderDataTable({
+    #return(as.data.frame(chemical_enricher()[['modl_acc']]))
+    return(chemical_enricher())
   })
   
   output$assay_info <- renderDataTable({

@@ -80,14 +80,14 @@ shinyUI(pageWithSidebar(
     tags$br(),
     h5('by assay source'),
     selectizeInput('assay_source', 'sources', choices = list(
-      Primary = c('ACEA','APR','ATG','BSK','NVS','OT', 'CLD', 'CEETOX'),
-      Others = c('TANGUAY','NHEERL_PADILLA','NCCT_SIMMONS', 'TOX21')
+      Primary = c('ACEA','APR','ATG','BSK','NVS','OT', 'CLD'),
+      Others = c('CEETOX','TANGUAY','NHEERL_PADILLA','NCCT_SIMMONS', 'TOX21')
       ), 
 #      options = list(
 #        placeholder = 'Please select multiple options below',
 #        onInitialize = I('function() { this.setValue(""); }')),
       multiple = TRUE,
-      selected=c('ACEA','APR','ATG','BSK','NVS','OT', 'CLD', 'CEETOX')
+      selected=c('ACEA','APR','ATG','BSK','NVS','OT', 'CLD')
       ),
     
     tags$br(),
@@ -136,6 +136,7 @@ shinyUI(pageWithSidebar(
       tabPanel( "Profile", plotOutput("profiling", height=1000, width="500%")), # i think the height don't affect 1000
       #tabPanel( "Potency boxplot", plotOutput("box",  height=1000, width="500%")),
       tabPanel( 'Activity data', dataTableOutput('dd')),
+      tabPanel('Enrichment analysis', dataTableOutput('enrich')),
       tabPanel( 'Assays', dataTableOutput('assay_info')),
       tabPanel('About', includeHTML("README.html"))
     )
