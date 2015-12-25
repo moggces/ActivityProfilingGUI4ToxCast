@@ -125,8 +125,8 @@ shinyUI(pageWithSidebar(
     # output functions
     br(),
     downloadButton('downloadData', 'Download Activities'),
-    downloadButton('downloadPlot', 'Save Plot')
-    
+    downloadButton('downloadPlot', 'Save Plot'),
+    downloadButton('downloadEnrich', 'Download Enrichment analysis')
     
   ),
   mainPanel(

@@ -231,28 +231,62 @@ get_published_data_only_commonname <- function (dd, assay_dd)
   return(result)
 }
 
-get_clust_assay_enrichment <- function (partial_act, full_act, annotation)
+get_clust_assay_enrichment <- function (partial_act, full_act, annotation, single_conc, calZscore=FALSE)
 {
+  
   pp <- partial_act %>% add_rownames() %>% left_join(select(add_rownames(annotation), -toxScore)) %>%
     mutate(allClust = "all") %>% gather(assay, act, -matches('rowname|Clust'), na.rm = TRUE) %>%
     gather(clust_group, clust, matches('Clust')) %>% 
-    group_by(assay, clust_group, clust) %>% filter(clust_group == 'userClust' & clust == 'unassigned') %>%
-    summarize(n=sum(act != 0.0001), n_p=sum(act > 0.0001), n_mean=mean(act), n_std=sd(act))
+    group_by(assay, clust_group, clust) %>% filter(clust != 'unassigned') %>%
+    #summarize(n=sum(act != 0.0001), n_p=sum(act > 0.0001), n_mean=mean(act), n_std=sd(act))
+    summarize(n=sum(act != 0.0001), n_p=sum(act > 0.0001))
   
-  ff <- full_act %>% select(one_of(colnames(partial_act))) %>% gather(assay, act, na.rm = TRUE) %>%
-    group_by(assay) %>% 
-    summarise(N=sum(act != 0.0001), N_P=sum(act > 0.0001), N_mean=mean(act), N_std=sd(act))
+  #print(colnames(partial_act))
+  ff_long <- full_act %>% add_rownames() %>% 
+    gather(assay, act, na.rm = TRUE, -rowname) %>% #select(one_of(colnames(partial_act))) (no need, it's almost every assay)
+    group_by(assay, rowname)
+  
+  
+  # for NVS & CEETOX
+  ss_long <- single_conc %>% select(matches('NVS|CEETOX', ignore.case=FALSE)) %>%
+              add_rownames() %>%
+              gather(assay, act, na.rm = TRUE, -rowname) %>%
+              filter(act == 1) %>% mutate(act = 0) %>% group_by(assay, rowname) 
+  
 
-  result <- pp %>% left_join(ff) %>% filter(n_p > 1) 
-  result <- result %>% rowwise() %>% 
-    mutate(logp = log10(get_fisher_pvalue(n, n_p, N_P, N)$p.value), zscore = (n_mean-N_mean)/N_std)
+  # the inconclusive due to filtering (<0) will be replaced 
+  ff_long <- bind_rows(ff_long, ss_long)  %>% group_by(assay, rowname) %>% summarize(act = max(act))
+  
+  
+  ff <- ff_long %>% group_by(assay) %>% summarise(N=sum(act != 0.0001), N_P=sum(act > 0.0001))
+  if (calZscore)
+  {
+    zz <- bind_rows(lapply(1:2000, function (x) pp %>% filter(n_p > 1) %>% 
+                           left_join(ff_long, by="assay") %>% 
+                           group_by(assay, clust_group, clust) %>% 
+            sample_frac(1) %>% slice(1:unique(n)) %>% group_by(assay, clust_group, clust) %>% 
+            summarize(ns_p=sum(act > 0.0001)))) %>% group_by(assay, clust_group, clust) %>% 
+            summarize(ns_mean=mean(ns_p), ns_std=sd(ns_p))
+    result <- pp %>% filter(n_p > 1) %>% left_join(zz) %>% left_join(ff)
+    result <- result %>% rowwise() %>% 
+      mutate(pvalue = get_fisher_pvalue(n, n_p, N_P, N)$p.value, zscore = (n_p-ns_mean)/ns_std)
+  } else
+  {
+    
+    result <- pp %>% filter(n_p > 1)  %>% left_join(ff)
+    result <- result %>% rowwise() %>% 
+      mutate(pvalue = get_fisher_pvalue(n, n_p, N_P, N)$p.value)
+  }
+
+  
   return(result)
   
 }
 
+# David's modified fisher's (conservative)
 get_fisher_pvalue <- function (n, n_p, N_P, N)
 {
-  conti <- matrix ( c( n_p, n-n_p, N_P-n_p, N-n-(N_P-n_p)), nrow=2, dimnames = list(active = c('In', 'notIn'), clust = c('In', 'notIn')))
-  fish <- fisher.test( conti, alternative="greater" )
+  conti <- matrix ( c( n_p-1, n-n_p, N_P-n_p, N-n-(N_P-n_p)), nrow=2, dimnames = list(active = c('In', 'notIn'), clust = c('In', 'notIn')))
+  fish <- fisher.test( conti ,  alternative="greater" )
   return(fish)
 }

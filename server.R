@@ -315,9 +315,7 @@ shinyServer(function(input, output) {
   })
   
   chemical_enricher <- reactive({
-    
-   
-    
+  
     paras <- heatmap_para_generator()
     if (is.null(paras)) return(NULL)
     
@@ -371,7 +369,7 @@ shinyServer(function(input, output) {
     # inactive = 0, filtered activities < 0, not tested NA
     full[[act_mat_names]][ full[['hitc']] == 0 & ! is.na(full[['hitc']]) ] <- 0
     
-    result <- get_clust_assay_enrichment(partial[[act_mat_names]], full[[act_mat_names]], paras[['annotation']])
+    result <- get_clust_assay_enrichment(partial[[act_mat_names]], full[[act_mat_names]], paras[['annotation']], full[['tested']], calZscore=TRUE)
     
     
     return(result)
@@ -430,7 +428,7 @@ shinyServer(function(input, output) {
 
   output$dd <- renderDataTable({
     
-#    return(as.data.frame(matrix_editor()[['modl_acc']]))
+#    return(as.data.frame(matrix_subsetter()[['modl_acc']]))
     
     paras <- heatmap_para_generator() #heatmap_para_generator
     act <- paras[['act']]
@@ -567,6 +565,28 @@ shinyServer(function(input, output) {
     }
   )
 
+  output$downloadEnrich <-  downloadHandler(
+    filename = function() {
+      
+      paste(input$acttype, '_enrichment.txt', sep='')
+    },
+    content = function(file) {
+      result <- chemical_enricher()
+      write.table(result, file, row.names = FALSE, col.names = TRUE, sep="\t", quote=FALSE, append=FALSE)
+    }
+  )
+  
+  output$downloadAssay <-  downloadHandler(
+    filename = function() {
+      
+      paste(input$acttype, '_assay.txt', sep='')
+    },
+    content = function(file) {
+      result <- chemical_enricher()
+      write.table(result, file, row.names = FALSE, col.names = TRUE, sep="\t", quote=FALSE, append=FALSE)
+    }
+  )
+  
 output$downloadPlot <- downloadHandler(
        filename = function() { 
         

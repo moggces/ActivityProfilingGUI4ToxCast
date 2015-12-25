@@ -81,5 +81,5 @@
 # coff <- as.data.frame(t(apply(t(activities[[1]]), 2, function(x) x <- assay_q_v$coff))) 
 # colnames(coff) <- colnames(activities[[1]])
 # activities[['scaled_emax']] <- activities$modl_tp/coff
-# activities <- lapply(activities, function (x) as.data.frame(x)) %>% setNames(names(activities))
+# activities <- lapply(activities, function (x) as.data.frame(x)) %>% setNames(names(activities)) # very important
 # save(activities, file='activities.RData')
