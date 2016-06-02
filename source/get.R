@@ -80,7 +80,7 @@ get_assay_mat <- function (partial, sel, inv=FALSE, type=c('source', 'gene', 'as
 get_cv_mark_mat <- function(flags,  act )
 {
   cv_mark <- flags[, colnames(flags) %in% colnames(act)]
-  cv_mark[cv_mark != ''  & act > 0.0001 ] <- "#"
+  cv_mark[cv_mark != '' & cv_mark != 'Hit-call potentially confounded by overfitting' & act > 0.0001 ] <- "#"
   cv_mark[cv_mark != "#"] <- ''
   return(cv_mark)
   

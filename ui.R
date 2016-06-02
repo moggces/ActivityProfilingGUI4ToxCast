@@ -52,7 +52,7 @@ shinyUI(pageWithSidebar(
     checkboxInput("cytofilter", "apply cytotoxicity filter", FALSE),
       
     tags$br(),
-    checkboxInput("flagfilter", "apply flag (from curve fitting) filter", FALSE),
+    checkboxInput("flagfilter", "apply flag filter (overfitting flag is OK)", FALSE),
     
     tags$br(),
     checkboxInput("noinconlab", "make inconclusive (compounds with cytotoxic or flag label) as inactive", TRUE),
@@ -81,7 +81,8 @@ shinyUI(pageWithSidebar(
     h5('by assay source'),
     selectizeInput('assay_source', 'sources', choices = list(
       Primary = c('ACEA','APR','ATG','BSK','NVS','OT', 'CLD'),
-      Others = c('CEETOX','TANGUAY','NHEERL_PADILLA','NCCT_SIMMONS', 'TOX21')
+      Others = c('CEETOX','Tanguay','NHEERL_ZF', 'TOX21') 
+      #NHEERL_PADILLA = NHEERL_ZF; TANGUAY = Tanguay; NCCT_SIMMONS = ? temporary
       ), 
 #      options = list(
 #        placeholder = 'Please select multiple options below',

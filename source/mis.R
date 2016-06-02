@@ -109,7 +109,7 @@ filter_activity_by_type <- function(partial, type, thres=NULL, decision=FALSE, a
       ids <- matrix(FALSE, nrow(partial[[name]]), ncol(partial[[name]]))
       if (type %in% c(act_mat_names, 'scaled_emax')) ids <- partial[[type]] < thres & ! is.na(partial[[type]]) & ! is.na(partial[[name]]) & partial[[name]] > 0.0001
       if (type == 'hitc' & isTRUE(decision)) ids <- partial[[type]] != 1 & ! is.na(partial[[type]]) & ! is.na(partial[[name]]) & partial[[name]] > 0.0001
-      if (type == 'flags' & isTRUE(decision)) ids <-  partial[[type]] != '' & ! is.na(partial[[type]]) & ! is.na(partial[[name]]) & partial[[name]] > 0.0001  
+      if (type == 'flags' & isTRUE(decision)) ids <- ( partial[[type]] != '' & partial[[type]] != 'Hit-call potentially confounded by overfitting' ) & ! is.na(partial[[type]]) & ! is.na(partial[[name]]) & partial[[name]] > 0.0001  
       partial[[name]][ids] <- (partial[[name]][ids])*-1
     }
   }

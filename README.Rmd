@@ -16,7 +16,7 @@ One type of input is allowed: chemicals
 ##### chemicals
 1. creat two columns of data (i.e., chemical ID and its attribute) in excel
   + chemical ID: one type is allowed, **CAS**
-      + CAS: Chemical Abstracts Service registration ID, e.g., 83-79-4
+      + CAS: Chemical Abstracts Service registration ID, e.g., 83-79-4. Please put as least two CASRNs.
   + attribute: any class attribute associated with the chemical that could be compared with the in vitro qHTS data
 2. create column names (case sensitive): **CAS** and **Cluster**
 3. copy and paste to the text area
@@ -58,7 +58,7 @@ The default activity results are filtered using the **hitc** matrix. But the act
 * scaled resp threshold: the ratio of the modeled top value to the cutoff value in each assay (similar to efficacy)
 * ACC, ACB, AC50, AC10 threshold: see above
 * apply cytotoxicity filter: ON to label hits which may be confounded by cytotoxicity as inconclusive (NB: **lower_bnd_um** column in **cyto_dist_Matrix** were used. Also, actives from the **burst_assay** (i.e. the assays used in generating cytotoxicity threshold) are exempt)
-* apply flag (from curve fitting) filter: ON to label hits which mayhave fitting issues (NB: **AllResults_flags** and **spid_Matrix** were used). When OFF, hits with flags will have  **#** in the cells
+* apply flag filter (overfitting flag is OK) filter: ON to label hits which have flags (NB: **AllResults_flags** and **spid_Matrix** were used). When OFF, hits with flags will have  **#** in the cells
 * make inconclusive (compounds with cytotoxic or flag label) as inactive: ON to make the cell value for inconclusive (0.0001) as inactive (0). 
 
 
@@ -141,6 +141,10 @@ The heatmap will be displayed here.
 #### Activity data 
 
 background data used for heatmap and potency plot
+
+#### Enrichment analysis
+
+
 
 #### Assays
 

@@ -369,7 +369,7 @@ shinyServer(function(input, output) {
     # inactive = 0, filtered activities < 0, not tested NA
     full[[act_mat_names]][ full[['hitc']] == 0 & ! is.na(full[['hitc']]) ] <- 0
     
-    result <- get_clust_assay_enrichment(partial[[act_mat_names]], full[[act_mat_names]], paras[['annotation']], full[['tested']], calZscore=TRUE)
+    result <- get_clust_assay_enrichment(partial[[act_mat_names]], full[[act_mat_names]], paras[['annotation']], full[['tested']], calZscore=FALSE)
     
     
     return(result)
