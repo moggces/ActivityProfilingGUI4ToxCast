@@ -82,7 +82,7 @@ img {
 <ul>
 <li>chemical ID: one type is allowed, <strong>CAS</strong>
 <ul>
-<li>CAS: Chemical Abstracts Service registration ID, e.g., 83-79-4</li>
+<li>CAS: Chemical Abstracts Service registration ID, e.g., 83-79-4. Please put as least two CASRNs.</li>
 </ul></li>
 <li>attribute: any class attribute associated with the chemical that could be compared with the in vitro qHTS data</li>
 </ul>
@@ -154,9 +154,9 @@ img {
 <ul>
 <li>scaled resp threshold: the ratio of the modeled top value to the cutoff value in each assay (similar to efficacy)</li>
 <li>ACC, ACB, AC50, AC10 threshold: see above</li>
-<li>apply cytotoxicity filter: ON to remove hits which may be confounded by cytotoxicity (NB: <strong>lower_bnd_um</strong> column in <strong>cyto_dist_Matrix</strong> were used. Also, <strong>burst_assay</strong> is excluded in the filtering)</li>
-<li>apply flag filter: ON to remove hits which may be have fitting issues (NB: <strong>AllResults_flags</strong> and <strong>spid_Matrix</strong> were used). When OFF, hits will flags with have <strong>#</strong> in the cells</li>
-<li>exclude inconclusive (e.g. cytotoxic, flag) label: make inconclusive (0.0001) as inactive (0)</li>
+<li>apply cytotoxicity filter: ON to label hits which may be confounded by cytotoxicity as inconclusive (NB: <strong>lower_bnd_um</strong> column in <strong>cyto_dist_Matrix</strong> were used. Also, actives from the <strong>burst_assay</strong> (i.e. the assays used in generating cytotoxicity threshold) are exempt)</li>
+<li>apply flag filter (overfitting flag is OK) filter: ON to label hits which have flags (NB: <strong>AllResults_flags</strong> and <strong>spid_Matrix</strong> were used). When OFF, hits with flags will have <strong>#</strong> in the cells</li>
+<li>make inconclusive (compounds with cytotoxic or flag label) as inactive: ON to make the cell value for inconclusive (0.0001) as inactive (0).</li>
 </ul>
 <hr />
 </div>
@@ -247,6 +247,9 @@ img {
 <div id="activity-data" class="section level4">
 <h4>Activity data</h4>
 <p>background data used for heatmap and potency plot</p>
+</div>
+<div id="enrichment-analysis" class="section level4">
+<h4>Enrichment analysis</h4>
 </div>
 <div id="assays" class="section level4">
 <h4>Assays</h4>

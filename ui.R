@@ -52,7 +52,7 @@ shinyUI(pageWithSidebar(
     checkboxInput("cytofilter", "apply cytotoxicity filter", FALSE),
       
     tags$br(),
-    checkboxInput("flagfilter", "apply flag (from curve fitting) filter", FALSE),
+    checkboxInput("flagfilter", "apply flag filter (overfitting flag is OK)", FALSE),
     
     tags$br(),
     checkboxInput("noinconlab", "make inconclusive (compounds with cytotoxic or flag label) as inactive", TRUE),
@@ -80,14 +80,15 @@ shinyUI(pageWithSidebar(
     tags$br(),
     h5('by assay source'),
     selectizeInput('assay_source', 'sources', choices = list(
-      Primary = c('ACEA','APR','ATG','BSK','NVS','OT', 'CLD', 'CEETOX'),
-      Others = c('TANGUAY','NHEERL_PADILLA','NCCT_SIMMONS', 'TOX21')
+      Primary = c('ACEA','APR','ATG','BSK','NVS','OT', 'CLD'),
+      Others = c('CEETOX','Tanguay','NHEERL_ZF', 'TOX21') 
+      #NHEERL_PADILLA = NHEERL_ZF; TANGUAY = Tanguay; NCCT_SIMMONS = ? temporary
       ), 
 #      options = list(
 #        placeholder = 'Please select multiple options below',
 #        onInitialize = I('function() { this.setValue(""); }')),
       multiple = TRUE,
-      selected=c('ACEA','APR','ATG','BSK','NVS','OT', 'CLD', 'CEETOX')
+      selected=c('ACEA','APR','ATG','BSK','NVS','OT', 'CLD')
       ),
     
     tags$br(),
@@ -125,8 +126,8 @@ shinyUI(pageWithSidebar(
     # output functions
     br(),
     downloadButton('downloadData', 'Download Activities'),
-    downloadButton('downloadPlot', 'Save Plot')
-    
+    downloadButton('downloadPlot', 'Save Plot'),
+    downloadButton('downloadEnrich', 'Download Enrichment analysis')
     
   ),
   mainPanel(
@@ -136,6 +137,7 @@ shinyUI(pageWithSidebar(
       tabPanel( "Profile", plotOutput("profiling", height=1000, width="500%")), # i think the height don't affect 1000
       #tabPanel( "Potency boxplot", plotOutput("box",  height=1000, width="500%")),
       tabPanel( 'Activity data', dataTableOutput('dd')),
+      tabPanel('Enrichment analysis', dataTableOutput('enrich')),
       tabPanel( 'Assays', dataTableOutput('assay_info')),
       tabPanel('About', includeHTML("README.html"))
     )
